@@ -33,12 +33,20 @@ function buildUserDataScript(githubRegistrationToken, label) {
 }
 
 async function startEc2Instance(label, githubRegistrationToken) {
-  core.info('In rachit & jatans AWS EC2 start function')
   const ec2 = new AWS.EC2();
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
   const params = {
+    BlockDeviceMappings: [ // BlockDeviceMappingRequestList
+      {
+        DeviceName: "/dev/xvda",
+        Ebs: { 
+          VolumeSize: 20,
+          VolumeType: "gp2",
+        },
+      },
+    ],
     ImageId: config.input.ec2ImageId,
     InstanceType: config.input.ec2InstanceType,
     MinCount: 1,
@@ -53,12 +61,9 @@ async function startEc2Instance(label, githubRegistrationToken) {
     },
   };
 
-  core.info('----- In rachit & jatans AWS EC2 start function, enable enclave options')
-
   try {
     const result = await ec2.runInstances(params).promise();
     const ec2InstanceId = result.Instances[0].InstanceId;
-    core.info(`In jatan & rachit runner, AWS EC2 instance ${ec2InstanceId} is started`);
     return ec2InstanceId;
   } catch (error) {
     core.error('AWS EC2 instance starting error');
